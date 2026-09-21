@@ -1,0 +1,52 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Project Data & Logs (Ignore large dataset files and raw collection logs)
+data/*.csv
+!data/README.md
+campus_wifi_raw_log.csv
+custom_trainingData.csv
+facilities_dead_zone_report.csv
+
+# Saved Model Artifacts (Binary files / Weights)
+models/*.keras
+models/*.h5
+models/*.pkl
+models/*.onnx
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+
+# IDEs & Code Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Operating System Files
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
