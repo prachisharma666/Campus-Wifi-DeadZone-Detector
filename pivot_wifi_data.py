@@ -1,65 +1,52 @@
-import pandas as pd
+import csv
 import os
+from collections import defaultdict
 
-def pivot_wifi_data(input_csv, output_csv):
-    if not os.path.exists(input_csv):
-        print(f"Error: {input_csv} not found.")
-        return
+input_file = 'campus_wifi_raw_log.csv'
+output_file = 'data/campus_trainingData.csv'
 
-    print(f"Loading raw data from {input_csv}...")
-    df = pd.read_csv(input_csv)
-    
-    # 1. Pivot the data to wide format
-    # Index: Groups readings by specific scan instances
-    # Columns: Creates a new column for every unique MAC Address
-    # Values: Places the RSSI value in the corresponding cell
-    print("Pivoting data to wide format...")
-    wide_df = df.pivot_table(
-        index=['Timestamp', 'Location_ID'], 
-        columns='MAC_Address', 
-        values='RSSI', 
-        aggfunc='mean' # Averages RSSI if a network is logged twice in the same second
-    )
-    
-    # 2. Fill missing access points with 100 
-    # (This matches the standard UJIIndoorLoc format for "not detected")
-    wide_df = wide_df.fillna(100)
-    
-    # Reset index to make Timestamp and Location_ID standard columns again
-    wide_df = wide_df.reset_index()
-    
-    # 3. Rename MAC Address columns to WAP001, WAP002... format
-    mac_columns = [col for col in wide_df.columns if col not in ['Timestamp', 'Location_ID']]
-    wap_mapping = {mac: f"WAP{str(i+1).zfill(3)}" for i, mac in enumerate(mac_columns)}
-    wide_df.rename(columns=wap_mapping, inplace=True)
-    
-    # 4. Parse Location_ID into Neural Network Target Columns
-    # Expects you typed your locations as "Building_Floor_Space" (e.g., "Lib_1_Stairs")
-    def parse_location(loc_string):
-        parts = str(loc_string).split('_')
-        if len(parts) >= 3:
-            return pd.Series([parts[0], parts[1], '_'.join(parts[2:])])
-        elif len(parts) == 2:
-            return pd.Series([parts[0], parts[1], 'Unknown'])
-        else:
-            return pd.Series(['Campus', '0', loc_string])
-            
-    wide_df[['BUILDINGID', 'FLOOR', 'SPACEID']] = wide_df['Location_ID'].apply(parse_location)
-    
-    # 5. Save the final Neural Network ready dataset
-    wide_df.to_csv(output_csv, index=False)
-    
-    # 6. Save a mapping dictionary (Crucial for translating WAP columns back to physical routers later)
-    mapping_df = pd.DataFrame(list(wap_mapping.items()), columns=['MAC_Address', 'WAP_Column'])
-    mapping_df.to_csv('wap_mac_mapping.csv', index=False)
-    
-    print("\n--- Processing Complete ---")
-    print(f"Raw readings processed: {len(df)}")
-    print(f"Unique scan locations/instances: {len(wide_df)}")
-    print(f"Total unique Access Points (WAPs) detected: {len(mac_columns)}")
-    print(f"\nTraining data saved to: {output_csv}")
-    print("MAC-to-WAP mapping saved to: wap_mac_mapping.csv")
+# Ensure the output directory exists
+os.makedirs('data', exist_ok=True)
 
-if __name__ == "__main__":
-    # Ensure you have installed pandas: pip install pandas
-    pivot_wifi_data('campus_wifi_raw_log.csv', 'custom_trainingData.csv')
+# Store signal readings: sessions[(Timestamp, Location_ID)][AP_ID] = max_RSSI
+sessions = defaultdict(dict)
+all_aps = set()
+
+# 1. Read raw CSV and filter personal hotspots
+with open(input_file, mode='r', encoding='cp1252') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        ssid = row['SSID']
+        
+        # Keep only campus Wi-Fi infrastructure
+        if ssid.startswith('SVKM'):
+            timestamp = row['Timestamp']
+            location = row['Location_ID']
+            ap_id = f"WAP_{row['MAC_Address']}"
+            rssi = float(row['RSSI'])
+
+            all_aps.add(ap_id)
+            session_key = (timestamp, location)
+
+            # Store peak RSSI per scan session
+            if ap_id not in sessions[session_key] or rssi > sessions[session_key][ap_id]:
+                sessions[session_key][ap_id] = rssi
+
+sorted_aps = sorted(list(all_aps))
+
+# 2. Write wide-format matrix
+with open(output_file, mode='w', newline='', encoding='utf-8') as f:
+    writer = csv.writer(f)
+    
+    # Write header columns
+    writer.writerow(['Timestamp', 'Location_ID'] + sorted_aps)
+
+    # Write data rows
+    for (timestamp, location), ap_signals in sessions.items():
+        row = [timestamp, location]
+        for ap in sorted_aps:
+            # Impute undetectable APs with -100.0 dBm
+            row.append(ap_signals.get(ap, -100.0))
+        writer.writerow(row)
+
+print(f"Successfully processed raw logs into {output_file} using pure Python!")
