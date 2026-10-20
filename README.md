@@ -125,18 +125,6 @@ python dead_zone_detector.py
 ```
 
 ---
-
-## 🗺️ Future Roadmap & Remaining Implementation
-
-While the core machine learning pipeline and benchmark validation are fully operational, the following two major project milestones are scheduled for implementation:
-
-```text
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│                             REMAINING MILESTONES                                 │
-├────────────────────────────────────────────────────────┬─────────────────────────┤
-│  Phase 1: Custom Campus Data Collection & Integration   │  [⏳ Pending Field Work]│
-├────────────────────────────────────────────────────────┼─────────────────────────┤
-│  Phase 2: Django Web Application & Cloud Deployment   │  [⏳ Pending Web Dev]   │
 └────────────────────────────────────────────────────────┴─────────────────────────┘
 
 ```
@@ -152,31 +140,6 @@ While the core machine learning pipeline and benchmark validation are fully oper
 
 
 
----
-
-### 🌐 Milestone 2: Django Web Application & Deployment
-
-* **Objective:** Wrap the trained ML model and dead-zone detector into a full-stack web dashboard designed for campus IT administrators and facilities managers.
-* **Planned Architecture:**
-
-```text
-[ Browser / Admin User ]
-          │
-          ▼
-┌──────────────────────────────────────────────────────────────────────────┐
-│                           DJANGO WEB BACKEND                             │
-│                                                                          │
-│  ┌───────────────────────┐                  ┌─────────────────────────┐  │
-│  │   REST API Endpoints  │                  │   Interactive Dashboard │  │
-│  │  - /api/predict/      │                  │  - Real-time Heatmaps   │  │
-│  │  - /api/scan-upload/  │                  │  - IT Priority Table    │  │
-│  └───────────┬───────────┘                  └────────────┬────────────┘  │
-│              │                                           │               │
-│              ▼                                           ▼               │
-│  ┌────────────────────────────────────────────────────────────────────┐  │
-│  │                     Model Inference Engine                         │  │
-│  │      Loads: nn_model.keras  |  pca.pkl  |  label_encoder.pkl       │  │
-│  └────────────────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────────────────┘
 
 ```
@@ -187,20 +150,12 @@ While the core machine learning pipeline and benchmark validation are fully oper
 3. **CSV Batch Ingestion:** Ability for IT engineers to upload raw scan files and receive instant PDF/CSV reports specifying exact locations needing additional Wireless Access Points (WAPs).
 
 
-* **Deployment Strategy:**
-* **Backend:** Django framework serving REST APIs via Django REST Framework (DRF).
-* **Containerization:** Dockerize the Django application, Keras dependencies, and Gunicorn WSGI server into a reproducible container.
-* **Cloud Hosting:** Deploy the Docker container on AWS EC2 or Render, with static files stored in AWS S3 and SQLite/PostgreSQL handling user query logs.
-
-
-
 ---
 
 ## 🛠️ Built With
 
 * **Machine Learning & Math:** TensorFlow / Keras, Scikit-Learn, NumPy, Pandas
 * **Data Collection & OS APIs:** Windows `netsh wlan` CLI, Subprocess API
-* **Target Web Stack (Upcoming):** Django, Django REST Framework, Bootstrap / Chart.js
 
 ```
 
